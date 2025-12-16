@@ -1,25 +1,31 @@
 {
-  "name": "atelier-cicd",
+  "name": "devops-app",
   "version": "1.0.0",
-  "description": "Site vitrine CI/CD avec GitHub Actions",
-  "main": "index.html",
+  "description": "Application Dashboard CI/CD avec pipeline DevOps",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Tests: Validation HTML réussie\" && exit 0",
-    "build": "echo \"Build: Site statique prêt\" && exit 0"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --coverage",
+    "lint": "eslint src/",
+    "build": "echo 'Build step'",
+    "docker:build": "docker build -t devops-app .",
+    "docker:run": "docker run -p 3000:8080 devops-app"
   },
-  "keywords": [
-    "devops",
-    "ci-cd",
-    "github-actions"
-  ],
-  "author": "Votre Nom",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cadel20/Atelier.git"
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   },
-  "bugs": {
-    "url": "https://github.com/cadel20/Atelier/issues"
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.53.0",
+    "nodemon": "^3.0.1"
   },
-  "homepage": "https://github.com/cadel20/Atelier#readme"
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["devops", "ci-cd", "docker", "github-actions"],
+  "author": "Thaumy",
+  "license": "MIT"
 }
