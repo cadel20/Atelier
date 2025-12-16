@@ -1,0 +1,2 @@
+docker pull cadel2/atelier-cicd:latest
+docker run -p 8080:80 cadel2/atelier-cicd:latests
