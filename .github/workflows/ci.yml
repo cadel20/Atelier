@@ -1,0 +1,123 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Validate HTML structure
+      run: |
+        echo "🔍 Validation de index.html..."
+        
+        # Vérifier que le fichier existe
+        if [ ! -f "index.html" ]; then
+          echo "❌ ERREUR: index.html manquant"
+          exit 1
+        fi
+        
+        # Vérifier le doctype (CRITIQUE)
+        if ! grep -q "<!DOCTYPE html>" index.html; then
+          echo "❌ ERREUR: Doctype HTML manquant (obligatoire)"
+          exit 1
+        else
+          echo "✅ Doctype HTML présent"
+        fi
+        
+        # Vérifier les balises essentielles
+        if ! grep -q "<title>" index.html; then
+          echo "⚠️  Warning: Balise <title> manquante (SEO impacté)"
+        else
+          echo "✅ Titre présent"
+        fi
+        
+        # Vérifier la viewport (mobile)
+        if ! grep -q "viewport" index.html; then
+          echo "⚠️  Warning: Viewport manquant (mobile non optimisé)"
+        else
+          echo "✅ Viewport présent"
+        fi
+        
+        # Vérifier charset
+        if ! grep -q "charset=" index.html; then
+          echo "⚠️  Warning: Charset manquant (encodage)"
+        else
+          echo "✅ Charset présent"
+        fi
+        
+        # Vérifier si c'est un site statique complet
+        FILE_SIZE=$(stat -f%z index.html 2>/dev/null || stat -c%s index.html 2>/dev/null)
+        echo "📏 Taille de index.html: $FILE_SIZE octets"
+        
+        if [ $FILE_SIZE -lt 1000 ]; then
+          echo "⚠️  Warning: index.html très petit (<1KB)"
+        fi
+    
+    - name: Run tests
+      run: |
+        # Exécuter npm test s'il existe, sinon simuler
+        if grep -q '"test"' package.json; then
+          npm test
+        else
+          echo "✅ Tests simulés - package.json n'a pas de script test"
+          echo "Pour ajouter des tests: ajouter 'test' dans scripts de package.json"
+        fi
+    
+    - name: Build site
+      run: |
+        # Créer le dossier dist
+        mkdir -p dist
+        
+        # Copier index.html
+        cp index.html dist/
+        
+        # Copier les autres fichiers s'ils existent
+        for file in *.css *.js *.png *.jpg *.jpeg *.gif *.ico *.svg; do
+          if [ -f "$file" ]; then
+            cp "$file" dist/
+            echo "📄 Copié: $file"
+          fi
+        done
+        
+        echo "📁 Structure du dossier dist:"
+        find dist -type f | sed 's/^/  /'
+    
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: website-build
+        path: dist/
+        retention-days: 7
+    
+    - name: Display success message
+      run: |
+        echo ""
+        echo "╔══════════════════════════════════════╗"
+        echo "║     🎉 CI PIPELINE RÉUSSI !         ║"
+        echo "╚══════════════════════════════════════╝"
+        echo ""
+        echo "📊 Résumé:"
+        echo "  ✅ HTML structure validée"
+        echo "  ✅ Dépendances installées"
+        echo "  ✅ Build créé dans dist/"
+        echo "  📦 Artefact téléchargeable"
+        echo ""
+        echo "Prochaine étape: Merge sur main pour déclencher le déploiement"
