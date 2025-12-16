@@ -3,10 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pipeline CI/CD DevOps - GitHub Actions</title>
+    <title>Pipeline CI/CD DevOps - Votre Projet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== RESET & GLOBAL STYLES ===== */
+        /* ===== CORRECTION DU HEADER ===== */
+        body {
+            padding-top: 40px; /* Compense la barre de statut fixe */
+        }
+
+        .status-bar {
+            height: 40px;
+            z-index: 1002;
+        }
+
+        .navbar {
+            top: 40px; /* Position sous la barre de statut */
+        }
+
+        /* ===== AJOUT DE NOUVEAUX STYLES POUR LA SIMULATION ===== */
+        .terminal-line {
+            margin: 2px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal-success {
+            color: #10b981;
+        }
+
+        .terminal-error {
+            color: #ef4444;
+        }
+
+        .terminal-warning {
+            color: #f59e0b;
+        }
+
+        .terminal-info {
+            color: #3b82f6;
+        }
+
+        .simulation-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .pipeline-progress {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .pipeline-progress-bar {
+            height: 100%;
+            background: var(--gradient);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        /* ===== ANIMATIONS AJOUTÉES ===== */
+        @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shaking {
+            animation: shake 0.5s ease;
+        }
+
+        /* ===== STYLES EXISTANTS (inchangés) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -17,10 +107,12 @@
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
             --secondary: #10b981;
+            --accent: #8b5cf6;
             --dark: #1f2937;
             --light: #f8fafc;
             --gray: #6b7280;
             --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-alt: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
         }
 
         body {
@@ -28,6 +120,7 @@
             line-height: 1.6;
             color: var(--dark);
             background: var(--light);
+            overflow-x: hidden;
         }
 
         .container {
@@ -40,18 +133,19 @@
             padding: 80px 0;
         }
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             font-weight: 700;
             line-height: 1.2;
             margin-bottom: 1rem;
         }
 
         h1 {
-            font-size: 3.5rem;
+            font-size: 3.2rem;
             background: var(--gradient);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         h2 {
@@ -74,6 +168,16 @@
             border-radius: 2px;
         }
 
+        .section-subtitle {
+            text-align: center;
+            color: var(--gray);
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         p {
             margin-bottom: 1rem;
             color: var(--gray);
@@ -94,17 +198,19 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
         .btn-outline {
             background: transparent;
             border: 2px solid var(--primary);
             color: var(--primary);
+            box-shadow: none;
         }
 
         .btn-outline:hover {
@@ -112,15 +218,25 @@
             color: white;
         }
 
-        /* ===== NAVBAR ===== */
+        .btn-secondary {
+            background: var(--gradient-alt);
+        }
+
         .navbar {
             position: fixed;
-            top: 0;
+            top: 40px;
             width: 100%;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
             z-index: 1000;
             padding: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            padding: 10px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }
 
         .nav-container {
@@ -141,6 +257,7 @@
 
         .nav-brand i {
             font-size: 1.8rem;
+            animation: pulse 2s infinite;
         }
 
         .nav-menu {
@@ -153,14 +270,23 @@
             text-decoration: none;
             color: var(--dark);
             font-weight: 500;
-            transition: color 0.3s;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
 
         .nav-menu a:hover {
             color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-menu a.active {
+            color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+            font-weight: 600;
         }
 
         .mobile-menu-btn {
@@ -170,15 +296,68 @@
             font-size: 1.5rem;
             color: var(--dark);
             cursor: pointer;
+            z-index: 1001;
         }
 
-        /* ===== HERO SECTION ===== */
+        .status-bar {
+            background: var(--dark);
+            color: white;
+            padding: 10px 0;
+            font-size: 0.9rem;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27ca3f;
+            animation: blink 2s infinite;
+        }
+
+        .status-dot.warning {
+            background: #ffbd2e;
+        }
+
+        #live-timer {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #10b981;
+        }
+
         .hero {
-            padding-top: 120px;
+            padding-top: 180px;
             background: linear-gradient(135deg, #f6f9ff 0%, #eef2ff 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><path fill="%23667eea" fill-opacity="0.03" d="M0,0 L1000,0 L1000,1000 L0,1000 Z"/><path fill="%23764ba2" fill-opacity="0.03" d="M500,0 L1000,500 L500,1000 L0,500 Z"/></svg>');
+            background-size: cover;
+            animation: float 20s linear infinite;
         }
 
         .hero-content {
@@ -186,36 +365,53 @@
             grid-template-columns: 1fr 1fr;
             gap: 50px;
             align-items: center;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-text h1 {
             font-size: 3.5rem;
             margin-bottom: 20px;
+            animation: slideInLeft 1s ease-out;
         }
 
         .hero-text p {
             font-size: 1.2rem;
             margin-bottom: 30px;
             color: var(--gray);
+            animation: slideInLeft 1s ease-out 0.2s both;
         }
 
         .hero-buttons {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
+            animation: slideInLeft 1s ease-out 0.4s both;
         }
 
         .hero-visual {
             position: relative;
+            animation: slideInRight 1s ease-out;
         }
 
         .pipeline-animation {
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .pipeline-animation:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
         }
 
         .pipeline-step {
@@ -227,288 +423,202 @@
             background: #f8fafc;
             border-radius: 10px;
             border-left: 4px solid var(--primary);
-            animation: pulse 2s infinite;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .pipeline-step:hover {
+            transform: translateX(5px);
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
         .pipeline-step i {
             color: var(--primary);
             font-size: 1.5rem;
-        }
-
-        .pipeline-step:nth-child(2) { animation-delay: 0.5s; }
-        .pipeline-step:nth-child(3) { animation-delay: 1s; }
-        .pipeline-step:nth-child(4) { animation-delay: 1.5s; }
-
-        @keyframes pulse {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(5px); }
-        }
-
-        /* ===== FEATURES SECTION ===== */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 50px;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-top: 4px solid var(--primary);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient);
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .feature-icon i {
-            font-size: 1.8rem;
-            color: white;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            color: var(--dark);
-            margin-bottom: 15px;
-        }
-
-        /* ===== WORKFLOW SECTION ===== */
-        .workflow {
-            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-            color: white;
-        }
-
-        .workflow h2 {
-            color: white;
-        }
-
-        .workflow h2:after {
-            background: var(--secondary);
-        }
-
-        .workflow-steps {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            margin-top: 50px;
-        }
-
-        .workflow-steps:before {
-            content: '';
-            position: absolute;
-            top: 40px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--secondary);
-            z-index: 1;
-        }
-
-        .workflow-step {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            flex: 1;
-        }
-
-        .step-number {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: white;
-            border: 5px solid #1f2937;
-        }
-
-        .step-content {
-            background: #374151;
-            padding: 20px;
+            background: rgba(37, 99, 235, 0.1);
             border-radius: 10px;
-            margin-top: 20px;
         }
 
-        .step-content h4 {
+        .pipeline-step.active {
+            border-left-color: var(--secondary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .pipeline-step.active i {
             color: var(--secondary);
-            margin-bottom: 10px;
+            background: rgba(16, 185, 129, 0.1);
         }
 
-        /* ===== TECHNOLOGIES SECTION ===== */
-        .tech-grid {
+        .metrics {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin: 30px 0;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            margin-top: 50px;
+            margin-top: 20px;
         }
 
-        .tech-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
+        .metric-card {
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
             transition: all 0.3s;
         }
 
-        .tech-card:hover {
+        .metric-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        .tech-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--primary);
-        }
-
-        /* ===== CI/CD DEMO SECTION ===== */
-        .demo-container {
             background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
-        .code-block {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            color: var(--gray);
             font-size: 0.9rem;
-            overflow-x: auto;
-            margin: 20px 0;
         }
 
-        .code-comment { color: #6a9955; }
-        .code-keyword { color: #569cd6; }
-        .code-string { color: #ce9178; }
-        .code-function { color: #dcdcaa; }
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 50px auto;
+        }
 
-        .terminal {
-            background: #1a1a1a;
-            border-radius: 8px;
+        .timeline:before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .timeline-content {
+            flex: 1;
             padding: 20px;
-            margin: 20px 0;
-        }
-
-        .terminal-header {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .terminal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .terminal-dot.red { background: #ff5f56; }
-        .terminal-dot.yellow { background: #ffbd2e; }
-        .terminal-dot.green { background: #27ca3f; }
-
-        .terminal-output {
-            color: #00ff00;
-            font-family: monospace;
-            line-height: 1.6;
-        }
-
-        /* ===== GITHUB ACTIONS SECTION ===== */
-        .actions-demo {
-            background: linear-gradient(135deg, #24292e 0%, #0d1117 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 40px;
-            margin-top: 30px;
-        }
-
-        .workflow-status {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
+            background: white;
             border-radius: 10px;
-            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #27ca3f;
-            animation: blink 2s infinite;
+        .timeline-date {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* ===== DEPLOYMENT SECTION ===== */
-        .deployment-cards {
+        .team-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 30px;
             margin-top: 50px;
         }
 
-        .deployment-card {
+        .team-card {
             background: white;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .deployment-card:hover {
+        .team-card:hover {
             transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 
-        .deployment-header {
+        .team-header {
             background: var(--gradient);
-            color: white;
-            padding: 20px;
+            padding: 30px;
             text-align: center;
+            color: white;
         }
 
-        .deployment-header i {
+        .team-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: white;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 2.5rem;
-            margin-bottom: 10px;
+            color: var(--primary);
+            border: 4px solid white;
         }
 
-        .deployment-content {
+        .team-content {
             padding: 25px;
         }
 
-        /* ===== FOOTER ===== */
+        .team-role {
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
         footer {
             background: var(--dark);
             color: white;
-            padding: 60px 0 20px;
+            padding: 80px 0 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        footer:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
         }
 
         .footer-content {
@@ -521,6 +631,30 @@
         .footer-section h3 {
             color: var(--secondary);
             margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .footer-section h3 i {
+            margin-right: 10px;
+        }
+
+        .personal-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .info-item i {
+            color: var(--secondary);
+            width: 20px;
         }
 
         .footer-links {
@@ -528,44 +662,142 @@
         }
 
         .footer-links li {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .footer-links a {
             color: #d1d5db;
             text-decoration: none;
-            transition: color 0.3s;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .footer-links a:hover {
             color: var(--secondary);
+            transform: translateX(5px);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
         }
 
         .copyright {
             text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #374151;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             color: #9ca3af;
             font-size: 0.9rem;
         }
 
-        /* ===== RESPONSIVE DESIGN ===== */
+        .build-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s, transform 0.6s;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         @media (max-width: 992px) {
             .hero-content {
                 grid-template-columns: 1fr;
                 text-align: center;
             }
 
-            .workflow-steps {
-                flex-direction: column;
-                gap: 40px;
+            .timeline:before {
+                left: 30px;
             }
 
-            .workflow-steps:before {
-                display: none;
+            .timeline-item {
+                flex-direction: row !important;
+                margin-left: 60px;
+            }
+
+            .timeline-date {
+                left: 0;
+                transform: translateX(-50%);
             }
 
             h1 {
@@ -580,14 +812,16 @@
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
-                position: absolute;
-                top: 100%;
+                position: fixed;
+                top: 0;
                 left: 0;
                 right: 0;
+                bottom: 0;
                 background: white;
                 flex-direction: column;
-                padding: 20px;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                padding: 80px 20px 20px;
+                z-index: 1000;
+                overflow-y: auto;
             }
 
             .nav-menu.active {
@@ -602,31 +836,45 @@
                 justify-content: center;
             }
 
+            .status-bar {
+                flex-wrap: wrap;
+                gap: 10px;
+                font-size: 0.8rem;
+            }
+
             section {
                 padding: 60px 0;
             }
         }
-
-        /* ===== ANIMATIONS ===== */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s, transform 0.6s;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
     </style>
 </head>
 <body>
+    <!-- Status Bar Live -->
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-dot"></div>
+            <span>Système CI/CD: <strong id="system-status">ACTIF</strong></span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-clock"></i>
+            <span>Temps réel: <span id="live-timer">00:00:00</span></span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot warning"></div>
+            <span>Dernier déploiement: <span id="last-deploy">En cours...</span></span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-server"></i>
+            <span>Environnement: <strong id="environment-status">PRODUCTION</strong></span>
+        </div>
+    </div>
+
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar" id="navbar">
         <div class="container nav-container">
-            <a href="#" class="nav-brand">
+            <a href="#home" class="nav-brand">
                 <i class="fas fa-code-branch"></i>
-                CI/CD Pipeline
+                DevOps Pipeline
             </a>
             
             <button class="mobile-menu-btn" onclick="toggleMenu()">
@@ -634,12 +882,13 @@
             </button>
             
             <ul class="nav-menu" id="navMenu">
-                <li><a href="#home"><i class="fas fa-home"></i> Accueil</a></li>
-                <li><a href="#features"><i class="fas fa-cogs"></i> Fonctionnalités</a></li>
-                <li><a href="#workflow"><i class="fas fa-project-diagram"></i> Workflow</a></li>
-                <li><a href="#technologies"><i class="fas fa-tools"></i> Technologies</a></li>
-                <li><a href="#demo"><i class="fas fa-code"></i> Démo CI/CD</a></li>
-                <li><a href="#deployment"><i class="fas fa-rocket"></i> Déploiement</a></li>
+                <li><a href="#home" class="active"><i class="fas fa-home"></i> Accueil</a></li>
+                <li><a href="#project"><i class="fas fa-project-diagram"></i> Projet</a></li>
+                <li><a href="#timeline"><i class="fas fa-history"></i> Chronologie</a></li>
+                <li><a href="#team"><i class="fas fa-users"></i> Équipe</a></li>
+                <li><a href="#metrics"><i class="fas fa-chart-line"></i> Métriques</a></li>
+                <li><a href="#demo"><i class="fas fa-code"></i> Démo</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
             </ul>
         </div>
     </nav>
@@ -649,32 +898,38 @@
         <div class="container">
             <div class="hero-content">
                 <div class="hero-text fade-in">
-                    <h1>Pipeline CI/CD Professionnel</h1>
-                    <p>Automatisez vos déploiements avec GitHub Actions. Un pipeline DevOps complet pour vos applications web.</p>
+                    <h1>Pipeline CI/CD DevOps</h1>
+                    <p>Implémentation complète d'un pipeline d'intégration et déploiement continu avec GitHub Actions, Docker et déploiement automatique.</p>
                     
                     <div class="hero-buttons">
                         <a href="#demo" class="btn">
                             <i class="fas fa-play-circle"></i> Voir la démo
                         </a>
-                        <a href="https://github.com" target="_blank" class="btn btn-outline">
+                        <a href="https://github.com/Thaumy/Atelier" target="_blank" class="btn btn-outline">
                             <i class="fab fa-github"></i> Code Source
+                        </a>
+                        <a href="#contact" class="btn btn-secondary">
+                            <i class="fas fa-rocket"></i> Démo Live
                         </a>
                     </div>
                     
-                    <div class="tech-stack">
-                        <p><small>Technologies utilisées :</small></p>
-                        <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
-                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
-                                <i class="fab fa-github" style="color: #181717;"></i> GitHub
+                    <div class="tech-stack" style="margin-top: 30px;">
+                        <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 10px;">Stack technique :</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <span style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                <i class="fab fa-github"></i> GitHub Actions
                             </span>
-                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
-                                <i class="fab fa-docker" style="color: #2496ed;"></i> Docker
+                            <span style="background: rgba(36, 150, 237, 0.1); color: #2496ed; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                <i class="fab fa-docker"></i> Docker
                             </span>
-                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
-                                <i class="fab fa-js" style="color: #f7df1e;"></i> JavaScript
+                            <span style="background: rgba(247, 223, 30, 0.1); color: #f7df1e; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                <i class="fab fa-js"></i> JavaScript
                             </span>
-                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
-                                <i class="fas fa-server" style="color: #10b981;"></i> Nginx
+                            <span style="background: rgba(16, 185, 129, 0.1); color: var(--secondary); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                <i class="fas fa-server"></i> Nginx
+                            </span>
+                            <span style="background: rgba(139, 92, 246, 0.1); color: var(--accent); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem;">
+                                <i class="fab fa-linux"></i> Ubuntu
                             </span>
                         </div>
                     </div>
@@ -686,35 +941,62 @@
                             <i class="fas fa-sync-alt"></i> Pipeline en temps réel
                         </h3>
                         
-                        <div class="pipeline-step">
+                        <div class="pipeline-step active" id="step1">
                             <i class="fas fa-code"></i>
                             <div>
                                 <strong>Commit du code</strong>
-                                <p style="font-size: 0.9rem; margin: 0;">Développeur push sur GitHub</p>
+                                <p style="font-size: 0.9rem; margin: 0; color: var(--gray);">Développeur push sur GitHub</p>
                             </div>
+                            <span style="margin-left: auto; font-size: 0.8rem; color: var(--secondary);">
+                                <i class="fas fa-check-circle"></i> Actif
+                            </span>
                         </div>
                         
-                        <div class="pipeline-step">
+                        <div class="pipeline-step" id="step2">
                             <i class="fas fa-check-circle"></i>
                             <div>
                                 <strong>Tests automatisés</strong>
-                                <p style="font-size: 0.9rem; margin: 0;">Validation qualité du code</p>
+                                <p style="font-size: 0.9rem; margin: 0; color: var(--gray);">Validation qualité du code</p>
                             </div>
+                            <span style="margin-left: auto; font-size: 0.8rem; color: var(--gray);">
+                                <i class="fas fa-clock"></i> En attente
+                            </span>
                         </div>
                         
-                        <div class="pipeline-step">
+                        <div class="pipeline-step" id="step3">
                             <i class="fas fa-docker"></i>
                             <div>
                                 <strong>Build Docker</strong>
-                                <p style="font-size: 0.9rem; margin: 0;">Création de l'image</p>
+                                <p style="font-size: 0.9rem; margin: 0; color: var(--gray);">Création de l'image</p>
                             </div>
+                            <span style="margin-left: auto; font-size: 0.8rem; color: var(--gray);">
+                                <i class="fas fa-clock"></i> En attente
+                            </span>
                         </div>
                         
-                        <div class="pipeline-step">
+                        <div class="pipeline-step" id="step4">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <div>
                                 <strong>Déploiement</strong>
-                                <p style="font-size: 0.9rem; margin: 0;">Mise en production</p>
+                                <p style="font-size: 0.9rem; margin: 0; color: var(--gray);">Mise en production</p>
+                            </div>
+                            <span style="margin-left: auto; font-size: 0.8rem; color: var(--gray);">
+                                <i class="fas fa-clock"></i> En attente
+                            </span>
+                        </div>
+
+                        <div class="pipeline-progress">
+                            <div class="pipeline-progress-bar" id="pipeline-progress"></div>
+                        </div>
+
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--gray);">
+                                <span><i class="fas fa-history"></i> Dernière exécution</span>
+                                <span id="pipeline-last-run">Aujourd'hui, 10:30</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
+                                <span><i class="fas fa-bolt"></i> Prochaine exécution</span>
+                                <span id="pipeline-next-run">Sur commit</span>
                             </div>
                         </div>
                     </div>
@@ -723,331 +1005,560 @@
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="features">
+    <!-- Project Section -->
+    <section id="project" class="project">
         <div class="container">
-            <h2>Fonctionnalités du Pipeline</h2>
+            <h2>Notre Projet CI/CD</h2>
+            <p class="section-subtitle">
+                Une implémentation complète des pratiques DevOps avec automatisation de bout en bout. 
+                Ce projet démontre l'intégration continue, le déploiement continu et l'orchestration 
+                des conteneurs dans un pipeline automatisé.
+            </p>
             
-            <div class="features-grid">
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3>Automatisation Complète</h3>
-                    <p>Du commit au déploiement, tout est automatisé. Plus d'intervention manuelle nécessaire.</p>
-                </div>
-                
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Tests Automatisés</h3>
-                    <p>Intégration continue avec tests unitaires et validation qualité du code à chaque commit.</p>
-                </div>
-                
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-ship"></i>
-                    </div>
-                    <h3>Containerisation Docker</h3>
-                    <p>Packaging de l'application dans des conteneurs Docker pour une portabilité maximale.</p>
-                </div>
-                
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-rocket"></i>
-                    </div>
-                    <h3>Déploiement Continu</h3>
-                    <p>Déploiement automatique sur GitHub Pages, VPS ou services cloud à chaque merge.</p>
-                </div>
-                
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <h3>Notifications</h3>
-                    <p>Alertes en temps réel sur Slack, Discord ou par email pour chaque étape du pipeline.</p>
-                </div>
-                
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Monitoring</h3>
-                    <p>Tableaux de bord et métriques pour suivre les performances et la santé de l'application.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Workflow Section -->
-    <section id="workflow" class="workflow">
-        <div class="container">
-            <h2>Notre Workflow CI/CD</h2>
-            
-            <div class="workflow-steps">
-                <div class="workflow-step fade-in">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4><i class="fas fa-code"></i> Développement</h4>
-                        <p>Les développeurs travaillent sur des branches fonctionnelles</p>
-                    </div>
-                </div>
-                
-                <div class="workflow-step fade-in">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4><i class="fas fa-code-branch"></i> Pull Request</h4>
-                        <p>Revue de code et validation par les pairs</p>
-                    </div>
-                </div>
-                
-                <div class="workflow-step fade-in">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4><i class="fas fa-check-circle"></i> Intégration Continue</h4>
-                        <p>Tests automatiques et build de l'application</p>
-                    </div>
-                </div>
-                
-                <div class="workflow-step fade-in">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h4><i class="fas fa-cloud-upload-alt"></i> Déploiement Continu</h4>
-                        <p>Mise en production automatique après validation</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Technologies Section -->
-    <section id="technologies" class="technologies">
-        <div class="container">
-            <h2>Technologies Utilisées</h2>
-            
-            <div class="tech-grid">
-                <div class="tech-card fade-in">
-                    <div class="tech-icon">
-                        <i class="fab fa-github"></i>
-                    </div>
-                    <h3>GitHub Actions</h3>
-                    <p>Orchestration du pipeline CI/CD</p>
-                </div>
-                
-                <div class="tech-card fade-in">
-                    <div class="tech-icon">
-                        <i class="fab fa-docker"></i>
-                    </div>
-                    <h3>Docker</h3>
-                    <p>Containerisation de l'application</p>
-                </div>
-                
-                <div class="tech-card fade-in">
-                    <div class="tech-icon">
-                        <i class="fab fa-js"></i>
-                    </div>
-                    <h3>JavaScript/Node.js</h3>
-                    <p>Développement de l'application</p>
-                </div>
-                
-                <div class="tech-card fade-in">
-                    <div class="tech-icon">
-                        <i class="fas fa-server"></i>
-                    </div>
-                    <h3>Nginx</h3>
-                    <p>Serveur web de production</p>
-                </div>
-                
-                <div class="tech-card fade-in">
-                    <div class="tech-icon">
-                        <i class="fab fa-linux"></i>
-                    </div>
-                    <h3>Linux/Ubuntu</h3>
-                    <p>Environnement d'exécution</p>
-                </div>
-                
-                <div class="tech-card fade-in">
-                    <div class="tech-icon">
-                        <i class="fas fa-terminal"></i>
-                    </div>
-                    <h3>Bash Scripting</h3>
-                    <p>Automatisation des tâches</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CI/CD Demo Section -->
-    <section id="demo" class="demo">
-        <div class="container">
-            <h2>Démonstration du Pipeline</h2>
-            
-            <div class="demo-container fade-in">
+            <div class="metrics">
                 <h3 style="color: var(--primary); margin-bottom: 20px;">
-                    <i class="fas fa-file-code"></i> Exemple de workflow GitHub Actions
+                    <i class="fas fa-chart-bar"></i> Métriques du Projet
                 </h3>
-                
-                <div class="code-block">
-                    <pre><code>
-<span class="code-comment"># .github/workflows/ci-cd.yml</span>
-<span class="code-keyword">name</span>: <span class="code-string">CI/CD Pipeline</span>
-
-<span class="code-keyword">on</span>:
-  <span class="code-keyword">push</span>:
-    <span class="code-keyword">branches</span>: [ main, dev ]
-  <span class="code-keyword">pull_request</span>:
-    <span class="code-keyword">branches</span>: [ main ]
-
-<span class="code-keyword">jobs</span>:
-  <span class="code-keyword">test</span>:
-    <span class="code-keyword">runs-on</span>: <span class="code-string">ubuntu-latest</span>
-    
-    <span class="code-keyword">steps</span>:
-    - <span class="code-keyword">uses</span>: <span class="code-string">actions/checkout@v4</span>
-    
-    - <span class="code-keyword">name</span>: <span class="code-string">Setup Node.js</span>
-      <span class="code-keyword">uses</span>: <span class="code-string">actions/setup-node@v4</span>
-      <span class="code-keyword">with</span>:
-        <span class="code-keyword">node-version</span>: <span class="code-string">'18'</span>
-    
-    - <span class="code-keyword">name</span>: <span class="code-string">Install dependencies</span>
-      <span class="code-keyword">run</span>: <span class="code-string">npm ci</span>
-    
-    - <span class="code-keyword">name</span>: <span class="code-string">Run tests</span>
-      <span class="code-keyword">run</span>: <span class="code-string">npm test</span>
-
-  <span class="code-keyword">build</span>:
-    <span class="code-keyword">needs</span>: [<span class="code-string">test</span>]
-    <span class="code-keyword">runs-on</span>: <span class="code-string">ubuntu-latest</span>
-    
-    <span class="code-keyword">steps</span>:
-    - <span class="code-keyword">uses</span>: <span class="code-string">actions/checkout@v4</span>
-    
-    - <span class="code-keyword">name</span>: <span class="code-string">Build Docker image</span>
-      <span class="code-keyword">run</span>: <span class="code-string">docker build -t myapp .</span>
-
-  <span class="code-keyword">deploy</span>:
-    <span class="code-keyword">needs</span>: [<span class="code-string">build</span>]
-    <span class="code-keyword">runs-on</span>: <span class="code-string">ubuntu-latest</span>
-    <span class="code-keyword">if</span>: <span class="code-string">github.ref == 'refs/heads/main'</span>
-    
-    <span class="code-keyword">steps</span>:
-    - <span class="code-keyword">name</span>: <span class="code-string">Deploy to production</span>
-      <span class="code-keyword">run</span>: <span class="code-string">echo "Deploying to production..."</span>
-                    </code></pre>
-                </div>
-
-                <div class="terminal fade-in">
-                    <div class="terminal-header">
-                        <div class="terminal-dot red"></div>
-                        <div class="terminal-dot yellow"></div>
-                        <div class="terminal-dot green"></div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <i class="fas fa-code-branch" style="font-size: 2rem; color: var(--primary);"></i>
+                        <div class="metric-value" id="commits-count">47</div>
+                        <div class="metric-label">Commits GitHub</div>
                     </div>
-                    <div class="terminal-output">
-                        <div>$ git push origin main</div>
-                        <div>→ Déclenchement du workflow GitHub Actions...</div>
-                        <div>✓ Étape 1/3: Tests - SUCCESS</div>
-                        <div>✓ Étape 2/3: Build Docker - SUCCESS</div>
-                        <div>✓ Étape 3/3: Déploiement - SUCCESS</div>
-                        <div>🎉 Application déployée avec succès!</div>
+                    <div class="metric-card">
+                        <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--secondary);"></i>
+                        <div class="metric-value" id="builds-count">12</div>
+                        <div class="metric-label">Builds réussis</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-docker" style="font-size: 2rem; color: #2496ed;"></i>
+                        <div class="metric-value" id="docker-pulls">156</div>
+                        <div class="metric-label">Pulls Docker</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-clock" style="font-size: 2rem; color: var(--accent);"></i>
+                        <div class="metric-value" id="uptime-percent">99.8%</div>
+                        <div class="metric-label">Disponibilité</div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- GitHub Actions Demo -->
-    <section class="actions-demo fade-in">
+    <!-- Timeline Section -->
+    <section id="timeline" class="timeline-section" style="background: #f8fafc;">
         <div class="container">
-            <h2 style="color: white;">GitHub Actions en Action</h2>
+            <h2>Chronologie du Projet</h2>
+            <p class="section-subtitle">
+                Évolution et jalons de notre implémentation CI/CD depuis le début du projet.
+            </p>
             
-            <div class="workflow-status">
-                <div class="status-dot"></div>
-                <div>
-                    <strong>Workflow en cours d'exécution</strong>
-                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.8;">
-                        Dernière exécution: Il y a 3 minutes | Durée: 45 secondes
-                    </p>
-                </div>s
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 30px;">
-                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas fa-check-circle" style="color: #27ca3f;"></i>
-                        <strong>Tests</strong>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">Semaine 1</div>
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-rocket"></i> Initialisation du projet</h4>
+                        <p>Création du dépôt GitHub, configuration des branches main/dev, et mise en place de la structure de base.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <span style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                GitHub
+                            </span>
+                            <span style="background: rgba(16, 185, 129, 0.1); color: var(--secondary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Git
+                            </span>
+                        </div>
                     </div>
-                    <small>100% passés</small>
                 </div>
                 
-                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas fa-docker" style="color: #2496ed;"></i>
-                        <strong>Build Docker</strong>
+                <div class="timeline-item">
+                    <div class="timeline-date">Semaine 2</div>
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-cogs"></i> Configuration CI</h4>
+                        <p>Implémentation du workflow GitHub Actions pour les tests automatiques et validation du code.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <span style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                GitHub Actions
+                            </span>
+                            <span style="background: rgba(247, 223, 30, 0.1); color: #f7df1e; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Node.js
+                            </span>
+                        </div>
                     </div>
-                    <small>Image créée</small>
                 </div>
                 
-                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas fa-rocket" style="color: #ff6b6b;"></i>
-                        <strong>Déploiement</strong>
+                <div class="timeline-item">
+                    <div class="timeline-date">Semaine 3</div>
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-docker"></i> Containerisation</h4>
+                        <p>Création du Dockerfile et intégration du build Docker dans le pipeline CI/CD.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <span style="background: rgba(36, 150, 237, 0.1); color: #2496ed; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Docker
+                            </span>
+                            <span style="background: rgba(139, 92, 246, 0.1); color: var(--accent); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Nginx
+                            </span>
+                        </div>
                     </div>
-                    <small>En production</small>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">Semaine 4</div>
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-cloud-upload-alt"></i> Déploiement Automatique</h4>
+                        <p>Configuration du déploiement continu vers le serveur de production avec validation automatique.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <span style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                SSH
+                            </span>
+                            <span style="background: rgba(16, 185, 129, 0.1); color: var(--secondary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Automatisation
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">Aujourd'hui</div>
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-chart-line"></i> Monitoring & Amélioration</h4>
+                        <p>Mise en place des dashboards de monitoring et optimisation des performances du pipeline.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <span style="background: rgba(139, 92, 246, 0.1); color: var(--accent); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Analytics
+                            </span>
+                            <span style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem;">
+                                Logs
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Deployment Options -->
-    <section id="deployment" class="deployment">
+    <!-- Team Section -->
+    <section id="team" class="team-section">
         <div class="container">
-            <h2>Options de Déploiement</h2>
+            <h2>Notre Équipe DevOps</h2>
+            <p class="section-subtitle">
+                L'équipe dédiée au développement et à la maintenance de notre pipeline CI/CD.
+            </p>
             
-            <div class="deployment-cards">
-                <div class="deployment-card fade-in">
-                    <div class="deployment-header">
-                        <i class="fab fa-github"></i>
-                        <h3>GitHub Pages</h3>
+            <div class="team-grid">
+                <div class="team-card fade-in">
+                    <div class="team-header">
+                        <div class="team-avatar">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h3>Thaumy</h3>
+                        <p class="team-role">Lead DevOps Engineer</p>
                     </div>
-                    <div class="deployment-content">
-                        <p>Déploiement automatique de sites statiques directement depuis GitHub.</p>
-                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Gratuit</li>
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> SSL automatique</li>
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> CDN intégré</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="deployment-card fade-in">
-                    <div class="deployment-header">
-                        <i class="fas fa-server"></i>
-                        <h3>VPS/Docker</h3>
-                    </div>
-                    <div class="deployment-content">
-                        <p>Déploiement sur serveur dédié avec Docker Compose pour plus de contrôle.</p>
-                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Contrôle total</li>
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Évolutif</li>
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Personnalisable</li>
-                        </ul>
+                    <div class="team-content">
+                        <p>Architecture du pipeline, configuration Docker et orchestration des déploiements.</p>
+                        <div class="info-item" style="margin-top: 15px;">
+                            <i class="fas fa-envelope"></i>
+                            <span>thaumy@example.com</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fab fa-github"></i>
+                            <span>github.com/Thaumy</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-code-branch"></i>
+                            <span>Main repositories: Atelier, CI/CD-Tools</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="deployment-card fade-in">
-                    <div class="deployment-header">
-                        <i class="fas fa-cloud"></i>
-                        <h3>Services Cloud</h3>
+                <div class="team-card fade-in">
+                    <div class="team-header">
+                        <div class="team-avatar" style="color: var(--secondary);">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h3>Alex Developer</h3>
+                        <p class="team-role">Full Stack Developer</p>
                     </div>
-                    <div class="deployment-content">
-                        <p>Déploiement sur Render, Railway, Fly.io pour des applications fullstack.</p>
-                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Simple d'utilisation</li>
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Gestion automatique</li>
-                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Scaling auto</li>
-                        </ul>
+                    <div class="team-content">
+                        <p>Développement des applications, tests automatisés et intégration continue.</p>
+                        <div class="info-item" style="margin-top: 15px;">
+                            <i class="fas fa-envelope"></i>
+                            <span>alex@example.com</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fab fa-git-alt"></i>
+                            <span>Git expert & Code Review</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-vial"></i>
+                            <span>Tests unitaires & intégration</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card fade-in">
+                    <div class="team-header">
+                        <div class="team-avatar" style="color: var(--accent);">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3>Sarah SysAdmin</h3>
+                        <p class="team-role">Infrastructure Manager</p>
+                    </div>
+                    <div class="team-content">
+                        <p>Gestion des serveurs, monitoring et sécurité de l'environnement de production.</p>
+                        <div class="info-item" style="margin-top: 15px;">
+                            <i class="fas fa-envelope"></i>
+                            <span>sarah@example.com</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Sécurité & Certifications</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Monitoring & Performance</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Metrics Section -->
+    <section id="metrics" class="metrics-section" style="background: linear-gradient(135deg, #f6f9ff 0%, #eef2ff 100%);">
+        <div class="container">
+            <h2>Métriques en Temps Réel</h2>
+            <p class="section-subtitle">
+                Surveillance des performances et de la santé du pipeline CI/CD.
+            </p>
+            
+            <div class="metrics fade-in">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-tachometer-alt"></i> Performance du Pipeline
+                        </h3>
+                        
+                        <div class="metrics-container">
+                            <div class="metric-item">
+                                <div style="font-size: 0.9rem; color: var(--gray);">Temps moyen d'exécution</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="avg-execution-time">2m 34s</div>
+                            </div>
+                            <div class="metric-item">
+                                <div style="font-size: 0.9rem; color: var(--gray);">Taux de succès</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);" id="success-rate">98.7%</div>
+                            </div>
+                            <div class="metric-item">
+                                <div style="font-size: 0.9rem; color: var(--gray);">Latence</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);" id="latency">142ms</div>
+                            </div>
+                            <div class="metric-item">
+                                <div style="font-size: 0.9rem; color: var(--gray);">Débit</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;" id="throughput">12/min</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 30px;">
+                            <h4 style="color: var(--dark); margin-bottom: 15px;">Statut des Services</h4>
+                            <div id="services-status" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Dynamiquement rempli par JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-chart-line"></i> Historique des Déploiements
+                        </h3>
+                        
+                        <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                                <span style="font-weight: 600;">Derniers déploiements</span>
+                                <span style="font-size: 0.9rem; color: var(--gray);">24 dernières heures</span>
+                            </div>
+                            
+                            <div id="deployments-history" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Dynamiquement rempli par JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <h4 style="color: var(--dark); margin-bottom: 15px;">Alertes Actives</h4>
+                            <div id="active-alerts">
+                                <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #fef2f2; border-radius: 8px; margin-bottom: 10px;">
+                                    <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">Latence élevée détectée</div>
+                                        <div style="font-size: 0.85rem; color: var(--gray);">Serveur de staging - 15 min</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #fffbeb; border-radius: 8px;">
+                                    <i class="fas fa-exclamation-circle" style="color: #f59e0b;"></i>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">Utilisation CPU élevée</div>
+                                        <div style="font-size: 0.85rem; color: var(--gray);">Container Docker - 85%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section" style="background: #f8fafc;">
+        <div class="container">
+            <h2>Démonstration Interactive</h2>
+            <p class="section-subtitle">
+                Simulez un pipeline CI/CD complet avec des scénarios réalistes.
+            </p>
+            
+            <div class="metrics fade-in">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start;">
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-play-circle"></i> Simulation du Pipeline
+                        </h3>
+                        
+                        <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="color: var(--dark);">Workflow GitHub Actions</h4>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="trigger-pipeline" class="btn" style="padding: 8px 20px; font-size: 0.9rem;">
+                                        <i class="fas fa-play"></i> Lancer le Pipeline
+                                    </button>
+                                    <button id="simulate-error" class="btn btn-outline" style="padding: 8px 20px; font-size: 0.9rem; border-color: #ef4444; color: #ef4444;">
+                                        <i class="fas fa-bug"></i> Simuler Erreur
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #1a1a1a; color: white; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85rem; margin-bottom: 15px; min-height: 150px;">
+                                <div id="terminal-output">
+                                    <div class="terminal-line">$ git push origin main</div>
+                                    <div class="terminal-line terminal-info">[INFO] Pushing to main branch...</div>
+                                    <div class="terminal-line terminal-success">✓ Successfully pushed commit: a1b2c3d</div>
+                                    <div class="terminal-line terminal-info">[INFO] Triggering GitHub Actions workflow...</div>
+                                </div>
+                                <div id="pipeline-output" class="simulation-log"></div>
+                            </div>
+                            
+                            <div class="pipeline-progress">
+                                <div class="pipeline-progress-bar" id="demo-progress"></div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px;">
+                                <button id="step-test" class="btn btn-outline" style="padding: 8px 15px; font-size: 0.85rem;">
+                                    <i class="fas fa-vial"></i> Exécuter Tests
+                                </button>
+                                <button id="step-build" class="btn btn-outline" style="padding: 8px 15px; font-size: 0.85rem;">
+                                    <i class="fas fa-docker"></i> Build Docker
+                                </button>
+                                <button id="step-deploy" class="btn btn-outline" style="padding: 8px 15px; font-size: 0.85rem;">
+                                    <i class="fas fa-cloud-upload-alt"></i> Déployer
+                                </button>
+                                <button id="reset-pipeline" class="btn btn-outline" style="padding: 8px 15px; font-size: 0.85rem; color: #ef4444; border-color: #ef4444;">
+                                    <i class="fas fa-redo"></i> Réinitialiser
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <h4 style="color: var(--dark); margin-bottom: 15px;">
+                                <i class="fas fa-code"></i> Code du Pipeline (extrait)
+                            </h4>
+                            <pre style="background: #f8fafc; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.85rem; color: var(--dark);">
+name: CI/CD Pipeline
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test
+  
+  build-docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Docker image
+        run: docker build -t myapp:${{ github.sha }} .
+      - name: Push to Registry
+        run: docker push myapp:${{ github.sha }}
+  
+  deploy:
+    needs: build-docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to production
+        run: ./deploy.sh ${{ github.sha }}</pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-chart-pie"></i> Statut Actuel
+                        </h3>
+                        
+                        <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <h4 style="color: var(--dark); margin-bottom: 15px;">Environnements</h4>
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background: #10b981;"></div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">Développement</div>
+                                        <div style="font-size: 0.85rem; color: var(--gray);">Version: v1.2.3-dev</div>
+                                    </div>
+                                    <span style="font-size: 0.85rem; color: var(--secondary);">Actif</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6;"></div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">Staging</div>
+                                        <div style="font-size: 0.85rem; color: var(--gray);">Version: v1.2.2</div>
+                                    </div>
+                                    <span style="font-size: 0.85rem; color: var(--primary);">Stable</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background: #8b5cf6;"></div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">Production</div>
+                                        <div style="font-size: 0.85rem; color: var(--gray);">Version: v1.2.1</div>
+                                    </div>
+                                    <span style="font-size: 0.85rem; color: var(--accent);">Live</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 10px; padding: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                            <h4 style="color: var(--dark); margin-bottom: 15px;">Prochaine Exécution</h4>
+                            <div id="next-execution" style="text-align: center; padding: 20px;">
+                                <div style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div style="font-size: 0.9rem; color: var(--gray);">
+                                    Attente d'un nouveau commit
+                                </div>
+                                <div id="countdown" style="font-size: 1.5rem; font-weight: 700; color: var(--dark); margin: 15px 0;">
+                                    --
+                                </div>
+                                <button id="simulate-commit" class="btn" style="padding: 8px 20px; font-size: 0.9rem; width: 100%;">
+                                    <i class="fas fa-code-commit"></i> Simuler un Commit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2>Contact & Contributions</h2>
+            <p class="section-subtitle">
+                Vous souhaitez en savoir plus, contribuer ou discuter DevOps ? Contactez-nous !
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: start;">
+                <div class="fade-in">
+                    <h3 style="color: var(--primary); margin-bottom: 20px;">
+                        <i class="fas fa-envelope-open-text"></i> Nous Contacter
+                    </h3>
+                    
+                    <div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);">
+                        <form id="contact-form">
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">
+                                    <i class="fas fa-user"></i> Nom
+                                </label>
+                                <input type="text" id="contact-name" style="width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 1rem;" placeholder="Votre nom" required>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">
+                                    <i class="fas fa-envelope"></i> Email
+                                </label>
+                                <input type="email" id="contact-email" style="width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 1rem;" placeholder="votre@email.com" required>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">
+                                    <i class="fas fa-edit"></i> Message
+                                </label>
+                                <textarea rows="5" id="contact-message" style="width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 1rem; resize: vertical;" placeholder="Votre message concernant le projet CI/CD..." required></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn" style="width: 100%;">
+                                <i class="fas fa-paper-plane"></i> Envoyer le Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="fade-in">
+                    <h3 style="color: var(--primary); margin-bottom: 20px;">
+                        <i class="fas fa-code-branch"></i> Contribuer au Projet
+                    </h3>
+                    
+                    <div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);">
+                        <p style="margin-bottom: 20px;">Ce projet est open source ! Vous pouvez contribuer de plusieurs manières :</p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                                <div style="width: 50px; height: 50px; background: rgba(37, 99, 235, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <i class="fab fa-github"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">Fork sur GitHub</div>
+                                    <div style="font-size: 0.9rem; color: var(--gray);">Copiez le dépôt et proposez vos modifications</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                                <div style="width: 50px; height: 50px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                                    <i class="fas fa-bug"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">Signaler un bug</div>
+                                    <div style="font-size: 0.9rem; color: var(--gray);">Ouvrez une issue sur GitHub</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                                <div style="width: 50px; height: 50px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">Proposer une amélioration</div>
+                                    <div style="font-size: 0.9rem; color: var(--gray);">Suggérez de nouvelles fonctionnalités</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                                <div style="width: 50px; height: 50px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444;">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">Améliorer la documentation</div>
+                                    <div style="font-size: 0.9rem; color: var(--gray);">Aidez à documenter le projet</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 25px; text-align: center;">
+                            <a href="https://github.com/Thaumy/Atelier" target="_blank" class="btn" style="width: 100%;">
+                                <i class="fab fa-github"></i> Visiter le Dépôt GitHub
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1059,83 +1570,387 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>CI/CD Pipeline</h3>
-                    <p>Un pipeline DevOps complet pour automatiser vos déploiements d'applications web.</p>
-                    <div style="display: flex; gap: 15px; margin-top: 20px;">
-                        <a href="https://github.com" target="_blank" style="color: white; font-size: 1.2rem;">
-                            <i class="fab fa-github"></i>
-                        </a>
-                        <a href="#" style="color: white; font-size: 1.2rem;">
-                            <i class="fab fa-docker"></i>
-                        </a>
-                        <a href="#" style="color: white; font-size: 1.2rem;">
+                    <h3><i class="fas fa-code-branch"></i> DevOps Pipeline</h3>
+                    <p>Projet d'implémentation d'un pipeline CI/CD complet avec GitHub Actions, Docker et déploiement automatique.</p>
+                    
+                    <div class="personal-info">
+                        <div class="info-item">
+                            <i class="fas fa-user"></i>
+                            <span>Responsable: <strong>Thaumy</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Projet: <strong>Atelier CI/CD</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Début: <strong>Janvier 2024</strong></span>
+                        </div>
+                        <div class="info-item">
                             <i class="fas fa-code"></i>
-                        </a>
+                            <span>Version: <strong>v2.1.0</strong></span>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Liens Rapides</h3>
+                    <h3><i class="fas fa-link"></i> Liens Rapides</h3>
                     <ul class="footer-links">
                         <li><a href="#home"><i class="fas fa-chevron-right"></i> Accueil</a></li>
-                        <li><a href="#features"><i class="fas fa-chevron-right"></i> Fonctionnalités</a></li>
-                        <li><a href="#workflow"><i class="fas fa-chevron-right"></i> Workflow</a></li>
-                        <li><a href="#demo"><i class="fas fa-chevron-right"></i> Démo CI/CD</a></li>
+                        <li><a href="#project"><i class="fas fa-chevron-right"></i> Projet</a></li>
+                        <li><a href="#timeline"><i class="fas fa-chevron-right"></i> Chronologie</a></li>
+                        <li><a href="#team"><i class="fas fa-chevron-right"></i> Équipe</a></li>
+                        <li><a href="#demo"><i class="fas fa-chevron-right"></i> Démo</a></li>
+                        <li><a href="#contact"><i class="fas fa-chevron-right"></i> Contact</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Technologies</h3>
+                    <h3><i class="fas fa-tools"></i> Technologies</h3>
                     <ul class="footer-links">
                         <li><a href="#"><i class="fab fa-github"></i> GitHub Actions</a></li>
                         <li><a href="#"><i class="fab fa-docker"></i> Docker</a></li>
-                        <li><a href="#"><i class="fab fa-js"></i> JavaScript</a></li>
+                        <li><a href="#"><i class="fab fa-js"></i> JavaScript/Node.js</a></li>
                         <li><a href="#"><i class="fas fa-server"></i> Nginx</a></li>
+                        <li><a href="#"><i class="fas fa-shield-alt"></i> SSH & Sécurité</a></li>
+                        <li><a href="#"><i class="fas fa-chart-bar"></i> Monitoring</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Contact</h3>
-                    <ul class="footer-links">
-                        <li><a href="#"><i class="fas fa-envelope"></i> contact@cicd-project.fr</a></li>
-                        <li><a href="#"><i class="fas fa-book"></i> Documentation</a></li>
-                        <li><a href="#"><i class="fas fa-code"></i> Code Source</a></li>
-                        <li><a href="#"><i class="fas fa-question-circle"></i> Support</a></li>
-                    </ul>
+                    <h3><i class="fas fa-share-alt"></i> Connectez-vous</h3>
+                    <p>Suivez le projet et contactez l'équipe :</p>
+                    
+                    <div class="social-links">
+                        <a href="https://github.com/Thaumy/Atelier" target="_blank" class="social-link">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-dev"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="build-info">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Build #: <strong id="build-number">47</strong></span>
+                            <span style="color: #10b981;">✓ Réussi</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Dernière mise à jour:</span>
+                            <span id="footer-last-update">Aujourd'hui, 14:30</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Environnement:</span>
+                            <span style="color: #8b5cf6;">Production</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div class="copyright">
-                <p>© 2024 Pipeline CI/CD DevOps Project. Déployé automatiquement avec GitHub Actions.</p>
-                <p style="margin-top: 10px; font-size: 0.8rem;">
-                    <i class="fas fa-sync-alt"></i> Dernière mise à jour: <span id="currentDate"></span>
+                <p>© 2024 DevOps Pipeline Project. Tous droits réservés. | Dernier déploiement: <span id="footer-deploy-time">Aujourd'hui, 14:30</span></p>
+                <p style="margin-top: 10px; font-size: 0.8rem; color: #9ca3af;">
+                    <i class="fas fa-code"></i> Développé avec passion par l'équipe DevOps | 
+                    <i class="fas fa-heart" style="color: #ef4444;"></i> Open Source
                 </p>
             </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
+    <!-- JavaScript Amélioré -->
     <script>
-        // Menu mobile
+        // ===== CORRECTION DU HEADER =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ajustement initial de la hauteur
+            document.body.style.paddingTop = '40px';
+        });
+
+        // ===== HORLOGE TEMPS RÉEL =====
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR');
+            document.getElementById('live-timer').textContent = timeString;
+            
+            // Mise à jour de la dernière mise à jour
+            const dateString = now.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('footer-last-update').textContent = dateString + ' ' + timeString;
+            
+            // Mise à jour aléatoire du statut système
+            if (Math.random() > 0.95) {
+                const status = document.getElementById('system-status');
+                status.textContent = 'MAINTENANCE';
+                status.style.color = '#f59e0b';
+                setTimeout(() => {
+                    status.textContent = 'ACTIF';
+                    status.style.color = '';
+                }, 5000);
+            }
+        }
+        
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ===== GESTION DE LA NAVBAR =====
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // ===== MENU MOBILE =====
         function toggleMenu() {
-            const menu = document.getElementById('navMenu');
-            menu.classList.toggle('active');
+            const navMenu = document.getElementById('navMenu');
+            const btn = document.querySelector('.mobile-menu-btn i');
+            navMenu.classList.toggle('active');
+            btn.classList.toggle('fa-bars');
+            btn.classList.toggle('fa-times');
         }
 
-        // Animation au scroll
-        function checkScroll() {
-            const elements = document.querySelectorAll('.fade-in');
-            elements.forEach(element => {
-                const position = element.getBoundingClientRect();
-                if (position.top < window.innerHeight - 100) {
-                    element.classList.add('visible');
+        // ===== ANIMATION DES SECTIONS =====
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
                 }
             });
-        }
+        }, observerOptions);
 
-        // Smooth scroll
+        document.querySelectorAll('.fade-in').forEach(element => {
+            observer.observe(element);
+        });
+
+        // ===== SIMULATION RÉALISTE DU PIPELINE =====
+        let currentStep = 1;
+        const steps = ['step1', 'step2', 'step3', 'step4'];
+        let isPipelineRunning = false;
+        let hasError = false;
+        
+        function resetPipeline() {
+            steps.forEach(step => {
+                const element = document.getElementById(step);
+                element.classList.remove('active');
+                const status = element.querySelector('span:last-child');
+                status.innerHTML = '<i class="fas fa-clock"></i> En attente';
+                status.style.color = 'var(--gray)';
+            });
+            
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('step1').querySelector('span:last-child').innerHTML = 
+                '<i class="fas fa-check-circle"></i> Actif';
+            document.getElementById('step1').querySelector('span:last-child').style.color = 'var(--secondary)';
+            
+            document.getElementById('pipeline-output').innerHTML = '';
+            document.getElementById('demo-progress').style.width = '0%';
+            document.getElementById('countdown').textContent = '--';
+            currentStep = 1;
+            hasError = false;
+            isPipelineRunning = false;
+            
+            // Réactiver les boutons
+            document.querySelectorAll('#step-test, #step-build, #step-deploy, #trigger-pipeline').forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Mettre à jour les métriques
+            updateMetrics();
+        }
+        
+        function updateMetrics() {
+            document.getElementById('commits-count').textContent = Math.floor(Math.random() * 10) + 47;
+            document.getElementById('builds-count').textContent = Math.floor(Math.random() * 5) + 12;
+            document.getElementById('docker-pulls').textContent = Math.floor(Math.random() * 20) + 156;
+            document.getElementById('build-number').textContent = Math.floor(Math.random() * 10) + 47;
+            
+            // Mettre à jour le dernier déploiement
+            const now = new Date();
+            const deployTime = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('last-deploy').textContent = deployTime;
+            document.getElementById('footer-deploy-time').textContent = 'Aujourd\'hui, ' + deployTime;
+        }
+        
+        function logToTerminal(message, type = 'info') {
+            const output = document.getElementById('pipeline-output');
+            const line = document.createElement('div');
+            line.className = `terminal-line terminal-${type}`;
+            line.textContent = message;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function simulateStep(stepIndex, stepName) {
+            return new Promise((resolve, reject) => {
+                const step = steps[stepIndex];
+                const element = document.getElementById(step);
+                
+                // Démarrage de l'étape
+                element.classList.add('active');
+                const status = element.querySelector('span:last-child');
+                status.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> En cours';
+                status.style.color = 'var(--primary)';
+                
+                // Log de début
+                logToTerminal(`[INFO] Démarrage de l'étape: ${stepName}...`, 'info');
+                
+                // Simulation avec délai réaliste
+                const delay = 1500 + Math.random() * 1000;
+                
+                setTimeout(() => {
+                    // Simulation d'erreur aléatoire (10% de chance)
+                    if (!hasError && Math.random() < 0.1) {
+                        hasError = true;
+                        element.classList.add('shaking');
+                        status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Erreur';
+                        status.style.color = '#ef4444';
+                        logToTerminal(`[ERREUR] Échec de l'étape ${stepName}`, 'error');
+                        logToTerminal(`[DÉTAIL] Test unitaire échoué: test_api_connection()`, 'error');
+                        reject(new Error(`Échec de ${stepName}`));
+                        
+                        // Mettre à jour le statut système
+                        document.getElementById('system-status').textContent = 'ERREUR';
+                        document.getElementById('system-status').style.color = '#ef4444';
+                        
+                        // Désactiver les boutons
+                        document.querySelectorAll('#step-test, #step-build, #step-deploy, #trigger-pipeline').forEach(btn => {
+                            btn.disabled = true;
+                        });
+                    } else {
+                        // Succès
+                        status.innerHTML = '<i class="fas fa-check-circle"></i> Terminé';
+                        status.style.color = 'var(--secondary)';
+                        logToTerminal(`[SUCCÈS] Étape ${stepName} terminée`, 'success');
+                        
+                        // Mise à jour de la progression
+                        const progress = ((stepIndex + 1) / steps.length) * 100;
+                        document.getElementById('demo-progress').style.width = `${progress}%`;
+                        
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
+        
+        async function runPipeline() {
+            if (isPipelineRunning) return;
+            
+            isPipelineRunning = true;
+            resetPipeline();
+            
+            const stepNames = ['Commit', 'Tests automatisés', 'Build Docker', 'Déploiement'];
+            
+            try {
+                // Étape 1: Commit
+                await simulateStep(0, stepNames[0]);
+                
+                // Étape 2: Tests
+                await simulateStep(1, stepNames[1]);
+                
+                // Étape 3: Build Docker
+                await simulateStep(2, stepNames[2]);
+                
+                // Étape 4: Déploiement
+                await simulateStep(3, stepNames[3]);
+                
+                // Pipeline terminé avec succès
+                logToTerminal('[SUCCÈS] Pipeline CI/CD terminé avec succès!', 'success');
+                document.getElementById('demo-progress').style.width = '100%';
+                
+                // Mise à jour des métriques
+                updateMetrics();
+                
+                // Mise à jour du statut
+                document.getElementById('pipeline-last-run').textContent = 
+                    'Il y a ' + Math.floor(Math.random() * 5 + 1) + ' min';
+                    
+            } catch (error) {
+                logToTerminal('[ERREUR] Pipeline interrompu à cause d\'une erreur', 'error');
+                logToTerminal('[ACTION] Notification envoyée à l\'équipe DevOps', 'warning');
+            } finally {
+                isPipelineRunning = false;
+            }
+        }
+        
+        // ===== ÉVÉNEMENTS DES BOUTONS =====
+        document.getElementById('trigger-pipeline').addEventListener('click', runPipeline);
+        
+        document.getElementById('simulate-error').addEventListener('click', function() {
+            hasError = true;
+            logToTerminal('[SIMULATION] Erreur forcée déclenchée', 'warning');
+        });
+        
+        document.getElementById('step-test').addEventListener('click', async () => {
+            if (currentStep === 1) {
+                await simulateStep(1, 'Tests automatisés');
+                currentStep = 2;
+            }
+        });
+        
+        document.getElementById('step-build').addEventListener('click', async () => {
+            if (currentStep === 2) {
+                await simulateStep(2, 'Build Docker');
+                currentStep = 3;
+            }
+        });
+        
+        document.getElementById('step-deploy').addEventListener('click', async () => {
+            if (currentStep === 3) {
+                await simulateStep(3, 'Déploiement');
+                currentStep = 4;
+            }
+        });
+        
+        document.getElementById('reset-pipeline').addEventListener('click', resetPipeline);
+        
+        // ===== SIMULATION DE COMMIT =====
+        document.getElementById('simulate-commit').addEventListener('click', function() {
+            const countdown = document.getElementById('countdown');
+            let count = 3;
+            
+            countdown.textContent = count;
+            countdown.style.color = 'var(--primary)';
+            
+            logToTerminal('[INFO] Simulation de commit GitHub...', 'info');
+            
+            const interval = setInterval(() => {
+                count--;
+                countdown.textContent = count;
+                
+                if (count === 0) {
+                    clearInterval(interval);
+                    countdown.textContent = 'Déclenchement...';
+                    countdown.style.color = 'var(--secondary)';
+                    
+                    setTimeout(() => {
+                        runPipeline();
+                        countdown.textContent = 'En cours...';
+                    }, 500);
+                }
+            }, 1000);
+        });
+        
+        // ===== NAVIGATION FLUIDE =====
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const targetId = this.getAttribute('href');
                 if (targetId === '#') return;
@@ -1143,64 +1958,142 @@
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
                     window.scrollTo({
-                        top: targetElement.offsetTop - 80,
+                        top: targetElement.offsetTop - 100,
                         behavior: 'smooth'
                     });
                     
                     // Fermer le menu mobile si ouvert
-                    const menu = document.getElementById('navMenu');
-                    menu.classList.remove('active');
+                    const navMenu = document.getElementById('navMenu');
+                    navMenu.classList.remove('active');
+                    
+                    // Mettre à jour l'icône du bouton
+                    const btn = document.querySelector('.mobile-menu-btn i');
+                    btn.classList.remove('fa-times');
+                    btn.classList.add('fa-bars');
                 }
             });
         });
-
-        // Afficher la date actuelle
-        function updateDate() {
-            const now = new Date();
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            document.getElementById('currentDate').textContent = 
-                now.toLocaleDateString('fr-FR', options);
-        }
-
-        // Simulation de logs CI/CD
-        function simulatePipeline() {
-            const steps = document.querySelectorAll('.pipeline-step');
-            steps.forEach((step, index) => {
-                setTimeout(() => {
-                    step.style.animation = 'pulse 2s infinite';
-                    setTimeout(() => {
-                        step.style.animation = '';
-                    }, 2000);
-                }, index * 1000);
+        
+        // ===== NAVIGATION ACTIVE =====
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-menu a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
             });
             
-            // Répéter toutes les 8 secondes
-            setTimeout(simulatePipeline, 8000);
-        }
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            updateDate();
-            checkScroll();
-            simulatePipeline();
-            
-            window.addEventListener('scroll', checkScroll);
-            
-            // Fermer le menu en cliquant à l'extérieur
-            document.addEventListener('click', function(event) {
-                const menu = document.getElementById('navMenu');
-                const btn = document.querySelector('.mobile-menu-btn');
-                if (!menu.contains(event.target) && !btn.contains(event.target)) {
-                    menu.classList.remove('active');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
                 }
             });
         });
+        
+        // ===== FORMULAIRE DE CONTACT =====
+        document.getElementById('contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('contact-name').value;
+            const email = document.getElementById('contact-email').value;
+            const message = document.getElementById('contact-message').value;
+            
+            // Simulation d'envoi
+            logToTerminal(`[INFO] Envoi du message de ${name} (${email})`, 'info');
+            
+            // Animation de chargement
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.');
+                this.reset();
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                logToTerminal('[SUCCÈS] Message envoyé avec succès', 'success');
+            }, 1500);
+        });
+        
+        // ===== SIMULATION DE MÉTRIQUES DYNAMIQUES =====
+        function updateDynamicMetrics() {
+            // Services status
+            const services = ['GitHub Actions', 'Docker Registry', 'Production Server', 'Database', 'Monitoring'];
+            const servicesStatus = document.getElementById('services-status');
+            servicesStatus.innerHTML = '';
+            
+            services.forEach(service => {
+                const isUp = Math.random() > 0.1;
+                const statusDiv = document.createElement('div');
+                statusDiv.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 8px;';
+                statusDiv.innerHTML = `
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: ${isUp ? '#10b981' : '#ef4444'};"></div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${service}</div>
+                        <div style="font-size: 0.85rem; color: var(--gray);">${isUp ? 'Opérationnel' : 'En maintenance'}</div>
+                    </div>
+                `;
+                servicesStatus.appendChild(statusDiv);
+            });
+            
+            // Déploiements récents
+            const deployments = document.getElementById('deployments-history');
+            deployments.innerHTML = '';
+            
+            const times = ['10:30', '09:15', '08:00', 'Hier 18:45', 'Hier 15:20'];
+            times.forEach(time => {
+                const success = Math.random() > 0.15;
+                const deploymentDiv = document.createElement('div');
+                deploymentDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);';
+                deploymentDiv.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600;">Déploiement ${time}</div>
+                        <div style="font-size: 0.85rem; color: var(--gray);">Version: v1.${Math.floor(Math.random() * 5)}.${Math.floor(Math.random() * 10)}</div>
+                    </div>
+                    <span style="color: ${success ? '#10b981' : '#ef4444'}">
+                        ${success ? '✓ Réussi' : '✗ Échoué'}
+                    </span>
+                `;
+                deployments.appendChild(deploymentDiv);
+            });
+            
+            // Mise à jour des métriques numériques
+            document.getElementById('avg-execution-time').textContent = 
+                `${Math.floor(Math.random() * 3) + 2}m ${Math.floor(Math.random() * 60)}s`;
+            document.getElementById('success-rate').textContent = 
+                `${(95 + Math.random() * 4).toFixed(1)}%`;
+            document.getElementById('latency').textContent = 
+                `${Math.floor(Math.random() * 100) + 100}ms`;
+            document.getElementById('throughput').textContent = 
+                `${Math.floor(Math.random() * 10) + 8}/min`;
+        }
+        
+        // ===== INITIALISATION =====
+        function init() {
+            resetPipeline();
+            updateDynamicMetrics();
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+            
+            // Mise à jour périodique des métriques
+            setInterval(updateDynamicMetrics, 10000);
+            
+            // Animation aléatoire du pipeline
+            setInterval(() => {
+                if (Math.random() > 0.8 && currentStep === 1) {
+                    document.getElementById('pipeline-last-run').textContent = 
+                        'Il y a ' + Math.floor(Math.random() * 5 + 1) + ' min';
+                }
+            }, 15000);
+        }
+        
+        init();
     </script>
 </body>
 </html>
