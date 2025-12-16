@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline CI/CD DevOps - GitHub Actions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --dark: #1f2937;
+            --light: #f8fafc;
+            --gray: #6b7280;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: var(--light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        h1, h2, h3 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        h2:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 30px;
+            background: var(--gradient);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 15px 0;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-brand i {
+            font-size: 1.8rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark);
+            cursor: pointer;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            padding-top: 120px;
+            background: linear-gradient(135deg, #f6f9ff 0%, #eef2ff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+
+        .hero-text p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: var(--gray);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .pipeline-animation {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        .pipeline-step i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .pipeline-step:nth-child(2) { animation-delay: 0.5s; }
+        .pipeline-step:nth-child(3) { animation-delay: 1s; }
+        .pipeline-step:nth-child(4) { animation-delay: 1.5s; }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
+        /* ===== FEATURES SECTION ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid var(--primary);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        /* ===== WORKFLOW SECTION ===== */
+        .workflow {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+        }
+
+        .workflow h2 {
+            color: white;
+        }
+
+        .workflow h2:after {
+            background: var(--secondary);
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-top: 50px;
+        }
+
+        .workflow-steps:before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--secondary);
+            z-index: 1;
+        }
+
+        .workflow-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            border: 5px solid #1f2937;
+        }
+
+        .step-content {
+            background: #374151;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .step-content h4 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        /* ===== TECHNOLOGIES SECTION ===== */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 50px;
+        }
+
+        .tech-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .tech-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        /* ===== CI/CD DEMO SECTION ===== */
+        .demo-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-string { color: #ce9178; }
+        .code-function { color: #dcdcaa; }
+
+        .terminal {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27ca3f; }
+
+        .terminal-output {
+            color: #00ff00;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        /* ===== GITHUB ACTIONS SECTION ===== */
+        .actions-demo {
+            background: linear-gradient(135deg, #24292e 0%, #0d1117 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-top: 30px;
+        }
+
+        .workflow-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #27ca3f;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ===== DEPLOYMENT SECTION ===== */
+        .deployment-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .deployment-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .deployment-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .deployment-header {
+            background: var(--gradient);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .deployment-header i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .deployment-content {
+            padding: 25px;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 60px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #d1d5db;
+            text-decoration: none;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #374151;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 992px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .workflow-steps {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .workflow-steps:before {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2.8rem;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            section {
+                padding: 60px 0;
+            }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s, transform 0.6s;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="nav-brand">
+                <i class="fas fa-code-branch"></i>
+                CI/CD Pipeline
+            </a>
+            
+            <button class="mobile-menu-btn" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home"><i class="fas fa-home"></i> Accueil</a></li>
+                <li><a href="#features"><i class="fas fa-cogs"></i> Fonctionnalités</a></li>
+                <li><a href="#workflow"><i class="fas fa-project-diagram"></i> Workflow</a></li>
+                <li><a href="#technologies"><i class="fas fa-tools"></i> Technologies</a></li>
+                <li><a href="#demo"><i class="fas fa-code"></i> Démo CI/CD</a></li>
+                <li><a href="#deployment"><i class="fas fa-rocket"></i> Déploiement</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text fade-in">
+                    <h1>Pipeline CI/CD Professionnel</h1>
+                    <p>Automatisez vos déploiements avec GitHub Actions. Un pipeline DevOps complet pour vos applications web.</p>
+                    
+                    <div class="hero-buttons">
+                        <a href="#demo" class="btn">
+                            <i class="fas fa-play-circle"></i> Voir la démo
+                        </a>
+                        <a href="https://github.com" target="_blank" class="btn btn-outline">
+                            <i class="fab fa-github"></i> Code Source
+                        </a>
+                    </div>
+                    
+                    <div class="tech-stack">
+                        <p><small>Technologies utilisées :</small></p>
+                        <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
+                                <i class="fab fa-github" style="color: #181717;"></i> GitHub
+                            </span>
+                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
+                                <i class="fab fa-docker" style="color: #2496ed;"></i> Docker
+                            </span>
+                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
+                                <i class="fab fa-js" style="color: #f7df1e;"></i> JavaScript
+                            </span>
+                            <span style="background: #f3f4f6; padding: 5px 15px; border-radius: 20px;">
+                                <i class="fas fa-server" style="color: #10b981;"></i> Nginx
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-visual fade-in">
+                    <div class="pipeline-animation">
+                        <h3 style="margin-bottom: 20px; color: var(--primary);">
+                            <i class="fas fa-sync-alt"></i> Pipeline en temps réel
+                        </h3>
+                        
+                        <div class="pipeline-step">
+                            <i class="fas fa-code"></i>
+                            <div>
+                                <strong>Commit du code</strong>
+                                <p style="font-size: 0.9rem; margin: 0;">Développeur push sur GitHub</p>
+                            </div>
+                        </div>
+                        
+                        <div class="pipeline-step">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>Tests automatisés</strong>
+                                <p style="font-size: 0.9rem; margin: 0;">Validation qualité du code</p>
+                            </div>
+                        </div>
+                        
+                        <div class="pipeline-step">
+                            <i class="fas fa-docker"></i>
+                            <div>
+                                <strong>Build Docker</strong>
+                                <p style="font-size: 0.9rem; margin: 0;">Création de l'image</p>
+                            </div>
+                        </div>
+                        
+                        <div class="pipeline-step">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <div>
+                                <strong>Déploiement</strong>
+                                <p style="font-size: 0.9rem; margin: 0;">Mise en production</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Fonctionnalités du Pipeline</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Automatisation Complète</h3>
+                    <p>Du commit au déploiement, tout est automatisé. Plus d'intervention manuelle nécessaire.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Tests Automatisés</h3>
+                    <p>Intégration continue avec tests unitaires et validation qualité du code à chaque commit.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-ship"></i>
+                    </div>
+                    <h3>Containerisation Docker</h3>
+                    <p>Packaging de l'application dans des conteneurs Docker pour une portabilité maximale.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>Déploiement Continu</h3>
+                    <p>Déploiement automatique sur GitHub Pages, VPS ou services cloud à chaque merge.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3>Notifications</h3>
+                    <p>Alertes en temps réel sur Slack, Discord ou par email pour chaque étape du pipeline.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Monitoring</h3>
+                    <p>Tableaux de bord et métriques pour suivre les performances et la santé de l'application.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow Section -->
+    <section id="workflow" class="workflow">
+        <div class="container">
+            <h2>Notre Workflow CI/CD</h2>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step fade-in">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4><i class="fas fa-code"></i> Développement</h4>
+                        <p>Les développeurs travaillent sur des branches fonctionnelles</p>
+                    </div>
+                </div>
+                
+                <div class="workflow-step fade-in">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4><i class="fas fa-code-branch"></i> Pull Request</h4>
+                        <p>Revue de code et validation par les pairs</p>
+                    </div>
+                </div>
+                
+                <div class="workflow-step fade-in">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4><i class="fas fa-check-circle"></i> Intégration Continue</h4>
+                        <p>Tests automatiques et build de l'application</p>
+                    </div>
+                </div>
+                
+                <div class="workflow-step fade-in">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4><i class="fas fa-cloud-upload-alt"></i> Déploiement Continu</h4>
+                        <p>Mise en production automatique après validation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technologies Section -->
+    <section id="technologies" class="technologies">
+        <div class="container">
+            <h2>Technologies Utilisées</h2>
+            
+            <div class="tech-grid">
+                <div class="tech-card fade-in">
+                    <div class="tech-icon">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <h3>GitHub Actions</h3>
+                    <p>Orchestration du pipeline CI/CD</p>
+                </div>
+                
+                <div class="tech-card fade-in">
+                    <div class="tech-icon">
+                        <i class="fab fa-docker"></i>
+                    </div>
+                    <h3>Docker</h3>
+                    <p>Containerisation de l'application</p>
+                </div>
+                
+                <div class="tech-card fade-in">
+                    <div class="tech-icon">
+                        <i class="fab fa-js"></i>
+                    </div>
+                    <h3>JavaScript/Node.js</h3>
+                    <p>Développement de l'application</p>
+                </div>
+                
+                <div class="tech-card fade-in">
+                    <div class="tech-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <h3>Nginx</h3>
+                    <p>Serveur web de production</p>
+                </div>
+                
+                <div class="tech-card fade-in">
+                    <div class="tech-icon">
+                        <i class="fab fa-linux"></i>
+                    </div>
+                    <h3>Linux/Ubuntu</h3>
+                    <p>Environnement d'exécution</p>
+                </div>
+                
+                <div class="tech-card fade-in">
+                    <div class="tech-icon">
+                        <i class="fas fa-terminal"></i>
+                    </div>
+                    <h3>Bash Scripting</h3>
+                    <p>Automatisation des tâches</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CI/CD Demo Section -->
+    <section id="demo" class="demo">
+        <div class="container">
+            <h2>Démonstration du Pipeline</h2>
+            
+            <div class="demo-container fade-in">
+                <h3 style="color: var(--primary); margin-bottom: 20px;">
+                    <i class="fas fa-file-code"></i> Exemple de workflow GitHub Actions
+                </h3>
+                
+                <div class="code-block">
+                    <pre><code>
+<span class="code-comment"># .github/workflows/ci-cd.yml</span>
+<span class="code-keyword">name</span>: <span class="code-string">CI/CD Pipeline</span>
+
+<span class="code-keyword">on</span>:
+  <span class="code-keyword">push</span>:
+    <span class="code-keyword">branches</span>: [ main, dev ]
+  <span class="code-keyword">pull_request</span>:
+    <span class="code-keyword">branches</span>: [ main ]
+
+<span class="code-keyword">jobs</span>:
+  <span class="code-keyword">test</span>:
+    <span class="code-keyword">runs-on</span>: <span class="code-string">ubuntu-latest</span>
+    
+    <span class="code-keyword">steps</span>:
+    - <span class="code-keyword">uses</span>: <span class="code-string">actions/checkout@v4</span>
+    
+    - <span class="code-keyword">name</span>: <span class="code-string">Setup Node.js</span>
+      <span class="code-keyword">uses</span>: <span class="code-string">actions/setup-node@v4</span>
+      <span class="code-keyword">with</span>:
+        <span class="code-keyword">node-version</span>: <span class="code-string">'18'</span>
+    
+    - <span class="code-keyword">name</span>: <span class="code-string">Install dependencies</span>
+      <span class="code-keyword">run</span>: <span class="code-string">npm ci</span>
+    
+    - <span class="code-keyword">name</span>: <span class="code-string">Run tests</span>
+      <span class="code-keyword">run</span>: <span class="code-string">npm test</span>
+
+  <span class="code-keyword">build</span>:
+    <span class="code-keyword">needs</span>: [<span class="code-string">test</span>]
+    <span class="code-keyword">runs-on</span>: <span class="code-string">ubuntu-latest</span>
+    
+    <span class="code-keyword">steps</span>:
+    - <span class="code-keyword">uses</span>: <span class="code-string">actions/checkout@v4</span>
+    
+    - <span class="code-keyword">name</span>: <span class="code-string">Build Docker image</span>
+      <span class="code-keyword">run</span>: <span class="code-string">docker build -t myapp .</span>
+
+  <span class="code-keyword">deploy</span>:
+    <span class="code-keyword">needs</span>: [<span class="code-string">build</span>]
+    <span class="code-keyword">runs-on</span>: <span class="code-string">ubuntu-latest</span>
+    <span class="code-keyword">if</span>: <span class="code-string">github.ref == 'refs/heads/main'</span>
+    
+    <span class="code-keyword">steps</span>:
+    - <span class="code-keyword">name</span>: <span class="code-string">Deploy to production</span>
+      <span class="code-keyword">run</span>: <span class="code-string">echo "Deploying to production..."</span>
+                    </code></pre>
+                </div>
+
+                <div class="terminal fade-in">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                    </div>
+                    <div class="terminal-output">
+                        <div>$ git push origin main</div>
+                        <div>→ Déclenchement du workflow GitHub Actions...</div>
+                        <div>✓ Étape 1/3: Tests - SUCCESS</div>
+                        <div>✓ Étape 2/3: Build Docker - SUCCESS</div>
+                        <div>✓ Étape 3/3: Déploiement - SUCCESS</div>
+                        <div>🎉 Application déployée avec succès!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GitHub Actions Demo -->
+    <section class="actions-demo fade-in">
+        <div class="container">
+            <h2 style="color: white;">GitHub Actions en Action</h2>
+            
+            <div class="workflow-status">
+                <div class="status-dot"></div>
+                <div>
+                    <strong>Workflow en cours d'exécution</strong>
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.8;">
+                        Dernière exécution: Il y a 2 minutes | Durée: 45 secondes
+                    </p>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 30px;">
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-check-circle" style="color: #27ca3f;"></i>
+                        <strong>Tests</strong>
+                    </div>
+                    <small>100% passés</small>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-docker" style="color: #2496ed;"></i>
+                        <strong>Build Docker</strong>
+                    </div>
+                    <small>Image créée</small>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-rocket" style="color: #ff6b6b;"></i>
+                        <strong>Déploiement</strong>
+                    </div>
+                    <small>En production</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deployment Options -->
+    <section id="deployment" class="deployment">
+        <div class="container">
+            <h2>Options de Déploiement</h2>
+            
+            <div class="deployment-cards">
+                <div class="deployment-card fade-in">
+                    <div class="deployment-header">
+                        <i class="fab fa-github"></i>
+                        <h3>GitHub Pages</h3>
+                    </div>
+                    <div class="deployment-content">
+                        <p>Déploiement automatique de sites statiques directement depuis GitHub.</p>
+                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Gratuit</li>
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> SSL automatique</li>
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> CDN intégré</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="deployment-card fade-in">
+                    <div class="deployment-header">
+                        <i class="fas fa-server"></i>
+                        <h3>VPS/Docker</h3>
+                    </div>
+                    <div class="deployment-content">
+                        <p>Déploiement sur serveur dédié avec Docker Compose pour plus de contrôle.</p>
+                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Contrôle total</li>
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Évolutif</li>
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Personnalisable</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="deployment-card fade-in">
+                    <div class="deployment-header">
+                        <i class="fas fa-cloud"></i>
+                        <h3>Services Cloud</h3>
+                    </div>
+                    <div class="deployment-content">
+                        <p>Déploiement sur Render, Railway, Fly.io pour des applications fullstack.</p>
+                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Simple d'utilisation</li>
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Gestion automatique</li>
+                            <li><i class="fas fa-check" style="color: var(--secondary);"></i> Scaling auto</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CI/CD Pipeline</h3>
+                    <p>Un pipeline DevOps complet pour automatiser vos déploiements d'applications web.</p>
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                        <a href="https://github.com" target="_blank" style="color: white; font-size: 1.2rem;">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" style="color: white; font-size: 1.2rem;">
+                            <i class="fab fa-docker"></i>
+                        </a>
+                        <a href="#" style="color: white; font-size: 1.2rem;">
+                            <i class="fas fa-code"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Liens Rapides</h3>
+                    <ul class="footer-links">
+                        <li><a href="#home"><i class="fas fa-chevron-right"></i> Accueil</a></li>
+                        <li><a href="#features"><i class="fas fa-chevron-right"></i> Fonctionnalités</a></li>
+                        <li><a href="#workflow"><i class="fas fa-chevron-right"></i> Workflow</a></li>
+                        <li><a href="#demo"><i class="fas fa-chevron-right"></i> Démo CI/CD</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Technologies</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fab fa-github"></i> GitHub Actions</a></li>
+                        <li><a href="#"><i class="fab fa-docker"></i> Docker</a></li>
+                        <li><a href="#"><i class="fab fa-js"></i> JavaScript</a></li>
+                        <li><a href="#"><i class="fas fa-server"></i> Nginx</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-envelope"></i> contact@cicd-project.fr</a></li>
+                        <li><a href="#"><i class="fas fa-book"></i> Documentation</a></li>
+                        <li><a href="#"><i class="fas fa-code"></i> Code Source</a></li>
+                        <li><a href="#"><i class="fas fa-question-circle"></i> Support</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>© 2024 Pipeline CI/CD DevOps Project. Déployé automatiquement avec GitHub Actions.</p>
+                <p style="margin-top: 10px; font-size: 0.8rem;">
+                    <i class="fas fa-sync-alt"></i> Dernière mise à jour: <span id="currentDate"></span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Menu mobile
+        function toggleMenu() {
+            const menu = document.getElementById('navMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Animation au scroll
+        function checkScroll() {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach(element => {
+                const position = element.getBoundingClientRect();
+                if (position.top < window.innerHeight - 100) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Fermer le menu mobile si ouvert
+                    const menu = document.getElementById('navMenu');
+                    menu.classList.remove('active');
+                }
+            });
+        });
+
+        // Afficher la date actuelle
+        function updateDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('currentDate').textContent = 
+                now.toLocaleDateString('fr-FR', options);
+        }
+
+        // Simulation de logs CI/CD
+        function simulatePipeline() {
+            const steps = document.querySelectorAll('.pipeline-step');
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.style.animation = 'pulse 2s infinite';
+                    setTimeout(() => {
+                        step.style.animation = '';
+                    }, 2000);
+                }, index * 1000);
+            });
+            
+            // Répéter toutes les 8 secondes
+            setTimeout(simulatePipeline, 8000);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDate();
+            checkScroll();
+            simulatePipeline();
+            
+            window.addEventListener('scroll', checkScroll);
+            
+            // Fermer le menu en cliquant à l'extérieur
+            document.addEventListener('click', function(event) {
+                const menu = document.getElementById('navMenu');
+                const btn = document.querySelector('.mobile-menu-btn');
+                if (!menu.contains(event.target) && !btn.contains(event.target)) {
+                    menu.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
