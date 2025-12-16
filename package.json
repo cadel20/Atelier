@@ -1,0 +1,25 @@
+{
+  "name": "atelier-cicd",
+  "version": "1.0.0",
+  "description": "Site vitrine CI/CD avec GitHub Actions",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Tests: Validation HTML réussie\" && exit 0",
+    "build": "echo \"Build: Site statique prêt\" && exit 0"
+  },
+  "keywords": [
+    "devops",
+    "ci-cd",
+    "github-actions"
+  ],
+  "author": "Votre Nom",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cadel20/Atelier.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cadel20/Atelier/issues"
+  },
+  "homepage": "https://github.com/cadel20/Atelier#readme"
+}

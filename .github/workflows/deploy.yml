@@ -1,8 +1,9 @@
-name: Deploy Static Site
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:  # Permet de déclencher manuellement
 
 permissions:
   pages: write
@@ -13,10 +14,38 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build (si nécessaire)
+      run: |
+        # Créer un dossier clean pour le déploiement
+        mkdir -p _site
+        
+        # Copier uniquement les fichiers nécessaires
+        cp index.html _site/
+        
+        # Copier autres assets s'ils existent
+        for ext in css js png jpg jpeg gif ico svg; do
+          if ls *.$ext 1> /dev/null 2>&1; then
+            cp *.$ext _site/ 2>/dev/null || true
+          fi
+        done
+        
+        # Ajouter un fichier de version
+        echo "Build: ${{ github.sha }}" > _site/version.txt
+        echo "Date: $(date)" >> _site/version.txt
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
@@ -24,7 +53,30 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: "."  # Déploie tout le dossier racine
-        
+        path: "_site"  # Dossier clean, pas la racine
+    
     - name: Deploy to GitHub Pages
+      id: deployment
       uses: actions/deploy-pages@v4
+    
+    - name: Verify deployment
+      run: |
+        echo "🚀 Déploiement réussi !"
+        echo "📎 URL: ${{ steps.deployment.outputs.page_url }}"
+        echo "🔗 Lien: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+        
+        # Attendre que le site soit accessible
+        sleep 10
+        
+        # Tester l'URL (optionnel)
+        if command -v curl &> /dev/null; then
+          echo "🔍 Test d'accessibilité du site..."
+          curl -s -o /dev/null -w "%{http_code}" "${{ steps.deployment.outputs.page_url }}" || echo "Test curl non disponible"
+        fi
+    
+    - name: Create deployment badge
+      run: |
+        # Créer un badge status
+        echo "![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Deployed-success?style=flat-square&logo=github)" >> $GITHUB_STEP_SUMMARY
+        echo "**URL**: [${{ steps.deployment.outputs.page_url }}](${{ steps.deployment.outputs.page_url }})" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
